@@ -1,9 +1,13 @@
 {
   "name": "atom-gmail-checker",
   "main": "./lib/atom-gmail-checker",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Displays the number of unread messages in your Google Mail inbox. You can also click the number to open your inbox.",
-  "keywords": ["Googke", "Mail", "Statusbar"],
+  "keywords": [
+    "Googke",
+    "Mail",
+    "Statusbar"
+  ],
   "repository": "https://github.com/nobuhito/atom-gmail-checker",
   "license": "MIT",
   "engines": {
