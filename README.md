@@ -4,7 +4,7 @@ Displays the number of unread messages in your Google Mail inbox. You can also c
 
 ![screenshot](https://raw.githubusercontent.com/nobuhito/atom-gmail-checker/master/img/screenshot.png)
 
-## FEUTURE
+## FEATURE
 
   - Display the number of unread messages.
   - Clixk the number to open your inbox.
