@@ -147,7 +147,10 @@ module.exports = AtomGmailChecker =
         counter.setUnreadCount "*"
         gmail.users.threads.list option, (err, response) =>
           console.log err if err
-          _setUnread counter, preview, response if response?.threads?
+          if response.threads?
+            _setUnread counter, preview, response
+          else
+            counter.setUnreadCount 0
       ), interval
 
       counter.setIntervalNumber(timer)
