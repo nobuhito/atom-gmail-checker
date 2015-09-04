@@ -5,8 +5,6 @@ AtomGmailCheckerPreviewView = require "./atom-gmail-checker-preview-view"
 
 fs = require 'fs'
 path = require 'path'
-google = require "googleapis"
-googleAuth = require "google-auth-library"
 _ = require "underscore-plus"
 
 module.exports = AtomGmailChecker =
@@ -30,6 +28,10 @@ module.exports = AtomGmailChecker =
       title: "Check query"
       type: "string"
       default: "is:unread is:inbox"
+    startupDelayTime:
+      title: "Startup Delay time (sec)"
+      type: "integer"
+      default: 5
 
   activate: (state) ->
 
@@ -42,7 +44,9 @@ module.exports = AtomGmailChecker =
   consumeStatusBar: (statusBar) ->
     @statusBarTile = statusBar.addRightTile
       item: atom.views.getView(@counter), priority: -1
-    @start()
+    setTimeout =>
+     @start()
+    , atom.config.get("atom-gmail-checker.startupDelayTime") * 1000
 
   start: ->
     console.log "gmail-checker was start."
@@ -53,6 +57,7 @@ module.exports = AtomGmailChecker =
       @authorize JSON.parse(content), @getUnread
 
   authorize: (credentials, callback) ->
+    googleAuth = require "google-auth-library"
     clientSecret = credentials.installed.client_secret
     clientId = credentials.installed.client_id
     redirectUrl = credentials.installed.redirect_uris[0]
@@ -95,6 +100,7 @@ module.exports = AtomGmailChecker =
 
   getUnread: (auth, counter) ->
 
+    google = require "googleapis"
     gmail = google.gmail("v1")
 
     option = {
