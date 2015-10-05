@@ -57,7 +57,7 @@ module.exports = AtomGmailChecker =
       params = [
         "response_type=token",
         "scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly",
-        "redirect_uri=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbxAFg64b4VkqDXSzKstsUWgzpyXYYk5VpQOnBUsHTVo%2Fdev",
+        "redirect_uri=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbyG6U0qbd2uV1iGa-7dH3qeqY1VRZKppcbGvYZMBMHL0_IzE_7F%2Fexec",
         "client_id=694137224755-obduaqe092fre3cpa69bfd41qhl0of2n",
       ]
       params.src = "https://accounts.google.com/o/oauth2/auth?&#{params.join("&")}"
