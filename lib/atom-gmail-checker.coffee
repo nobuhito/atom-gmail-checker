@@ -31,29 +31,23 @@ module.exports = AtomGmailChecker =
       title: "Check query"
       type: "string"
       default: "is:unread is:inbox"
-    startupDelayTime:
-      title: "Startup Delay time (sec)"
-      type: "integer"
-      default: 5
 
   activate: (state) ->
 
     @SCOPES = ["#{API}/auth/gmail.readonly"]
-    @TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + "/.atom/"
-    @TOKEN_PATH = @TOKEN_DIR + "atom-gmail-checker-token.json"
-    @CLIENT_SECRET = path.join(__dirname, "..", "client_secret.json")
+    # @TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + "/.atom/"
+    # @TOKEN_PATH = @TOKEN_DIR + "atom-gmail-checker-token.json"
+    # @CLIENT_SECRET = path.join(__dirname, "..", "client_secret.json")
     @counter = new AtomGmailCheckerStatusView({userId: ""})
 
   consumeStatusBar: (statusBar) ->
     @statusBarTile = statusBar.addRightTile
       item: atom.views.getView(@counter), priority: -1
-    setTimeout =>
-     @start()
-    , atom.config.get("atom-gmail-checker.startupDelayTime") * 1000
+    @start()
 
   start: ->
     console.log "gmail-checker was start."
-    unless localStorage.atom_gmail_checker_token?
+    unless @access_token?
       params = [
         "response_type=token",
         "scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly",
@@ -68,13 +62,16 @@ module.exports = AtomGmailChecker =
       @setUserId()
 
   auth: ->
-    localStorage.atom_gmail_checker_token = RegExp.$1
-    @panelHide()
+    @access_token = RegExp.$1
+    setTimeout =>
+      @panelHide()
+    , 5000
     @setUserId()
 
   setUserId: ->
-    url = "#{API}/gmail/v1/users/me/profile?access_token=#{localStorage.atom_gmail_checker_token}"
-    @getJson url, (res) =>
+    url = "#{API}/gmail/v1/users/me/profile?access_token=#{@access_token}"
+    @getJson url, (err, res) =>
+      return null if err
       @subscriptions = new CompositeDisposable
       @subscriptions.add atom.commands.add 'atom-workspace',
         'atom_gmail_checker:logout': => @logout()
@@ -106,17 +103,19 @@ module.exports = AtomGmailChecker =
         counter.setHistoryId _.max(threads, (d)->d.historyId)
 
     options = [
-      "access_token=#{localStorage.atom_gmail_checker_token}",
+      "access_token=#{@access_token}",
       "maxResults=50",
       "q=#{encodeURIComponent(atom.config.get("atom-gmail-checker.checkQuery"))}"
     ]
     url = "#{API}/gmail/v1/users/me/threads?#{options.join("&")}"
-    @getJson url, (res) =>
+    @getJson url, (err, res) =>
+      return null if err
       _setUnread @counter, @preview, res
     interval = atom.config.get("atom-gmail-checker.checkInterval") * 1000
     timer = setInterval (() =>
       @counter.setUnreadCount "*"
-      @getJson url, (res) =>
+      @getJson url, (err, res) =>
+        return null if err
         _setUnread @counter, @preview, res
     ), interval
 
@@ -132,17 +131,26 @@ module.exports = AtomGmailChecker =
 
   getJson: (url, cb) ->
     req = http.get url, (res) =>
-      body = ""
-      res.on "data", (chunk) =>
-        body += chunk
-      res.on "end", () =>
-        res = JSON.parse(body)
-        cb(res)
+      if res.statusCode is 200
+        body = ""
+        res.on "data", (chunk) =>
+          body += chunk
+        res.on "end", () =>
+          res = JSON.parse(body)
+          cb null, res
+      else
+        message = "#{res.statusCode}:#{res.statusMessage} (#{res.req._header})"
+        console.error res
+        atom.notifications.addError("Atom gmail checker error", {detail: message, dismissable: true})
+        cb message, null
     req.on "error", (e) =>
-      console.log e
+      console.error e
+      atom.notifications.addError("Atom gmail checker error", {detail: JSON.stringify(e), dismissable: true})
+      cb e, null
 
   panelHide: ->
     @authPanel.hide()
+    @authPane = null
 
   deactivate: ->
     @dispose()
