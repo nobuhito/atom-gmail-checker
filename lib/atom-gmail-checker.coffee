@@ -60,7 +60,6 @@ module.exports = AtomGmailChecker =
     @auth()
 
   auth: ->
-    console.log "auth"
     clearInterval(@unreadCheckTimer) if @unreadCheckTimer
     params = {}
     params.src = "https://nobuhito.github.io/atom-gmail-checker/oauth2callback#auth"
@@ -69,7 +68,6 @@ module.exports = AtomGmailChecker =
     @authPanel = atom.workspace.addRightPanel(item: atom.views.getView(auth))
 
   setReAuth: (interval) ->
-    console.log "setReAuth: #{interval}"
     @authTimer = setInterval =>
       @auth()
     , interval
@@ -82,7 +80,6 @@ module.exports = AtomGmailChecker =
     @setUserId() unless @emailAddress?
 
   setUserId: ->
-    console.log "setUserId"
     url = "#{API}/gmail/v1/users/me/profile?access_token=#{@access_token}"
     @getJson url, (err, res) =>
       return null if err
