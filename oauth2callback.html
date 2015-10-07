@@ -23,6 +23,9 @@
     ]
     var url = "https://accounts.google.com/o/oauth2/auth?" + params.join("&");
     location.href = url;
+  } else if (location.hash.indexOf("access_token") > -1) {
+    document.getElementsByTagName("body").item(0).innerHTML ="Authorization succeeded for AtomGmailChecker." 
+  }
   }
   </script>
 </body>
