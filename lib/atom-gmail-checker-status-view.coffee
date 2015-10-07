@@ -22,9 +22,3 @@ class AtomGmailCheckerStatusView extends View
 
   getHistoryId: ->
     @counter.attr "data-historyId"
-
-  setIntervalNumber: (num) ->
-    @counter.attr "data-intervalNumber", num
-
-  getIntervalNumber: ->
-    @counter.attr "data-intervalNumber"

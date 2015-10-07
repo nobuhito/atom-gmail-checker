@@ -35,9 +35,6 @@ module.exports = AtomGmailChecker =
   activate: (state) ->
 
     @SCOPES = ["#{API}/auth/gmail.readonly"]
-    # @TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + "/.atom/"
-    # @TOKEN_PATH = @TOKEN_DIR + "atom-gmail-checker-token.json"
-    # @CLIENT_SECRET = path.join(__dirname, "..", "client_secret.json")
     @counter = new AtomGmailCheckerStatusView({userId: ""})
 
   consumeStatusBar: (statusBar) ->
@@ -47,28 +44,32 @@ module.exports = AtomGmailChecker =
 
   start: ->
     console.log "gmail-checker was start."
-    unless @access_token?
-      params = [
-        "response_type=token",
-        "scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fgmail.readonly",
-        "redirect_uri=https%3A%2F%2Fscript.google.com%2Fmacros%2Fs%2FAKfycbyG6U0qbd2uV1iGa-7dH3qeqY1VRZKppcbGvYZMBMHL0_IzE_7F%2Fexec",
-        "client_id=694137224755-obduaqe092fre3cpa69bfd41qhl0of2n",
-      ]
-      params.src = "https://accounts.google.com/o/oauth2/auth?&#{params.join("&")}"
-
-      auth = new AtomGmailCheckerAuthView(params, this)
-      @authPanel = atom.workspace.addRightPanel(item: atom.views.getView(auth))
-    else
-      @setUserId()
+    @auth()
 
   auth: ->
-    @access_token = RegExp.$1
+    console.log "auth"
+    clearInterval(@unreadCheckTimer) if @unreadCheckTimer
+    params = {}
+    params.src = "https://nobuhito.github.io/atom-gmail-checker/oauth2callback#auth"
+
+    auth = new AtomGmailCheckerAuthView(params, this)
+    @authPanel = atom.workspace.addRightPanel(item: atom.views.getView(auth))
+
+  setReAuth: (interval) ->
+    console.log "setReAuth: #{interval}"
+    @authTimer = setInterval =>
+      @auth()
+    , interval
+
+  postAuth: (access_token) ->
+    @access_token = access_token
     setTimeout =>
       @panelHide()
     , 5000
-    @setUserId()
+    @setUserId() unless @emailAddress?
 
   setUserId: ->
+    console.log "setUserId"
     url = "#{API}/gmail/v1/users/me/profile?access_token=#{@access_token}"
     @getJson url, (err, res) =>
       return null if err
@@ -77,6 +78,7 @@ module.exports = AtomGmailChecker =
         'atom_gmail_checker:logout': => @logout()
       @counter.setHistoryId res.historyId
       @counter.setEmailAddress res.emailAddress
+      @emailAddress = res.emailAddress
       @getUnread @counter, res.emailAddress
 
   getUnread: (emailAddress) ->
@@ -112,14 +114,12 @@ module.exports = AtomGmailChecker =
       return null if err
       _setUnread @counter, @preview, res
     interval = atom.config.get("atom-gmail-checker.checkInterval") * 1000
-    timer = setInterval (() =>
+    @unreadCheckTimer = setInterval (() =>
       @counter.setUnreadCount "*"
       @getJson url, (err, res) =>
         return null if err
         _setUnread @counter, @preview, res
     ), interval
-
-    @counter.setIntervalNumber timer
 
   logout: ->
     localStorage.removeItem("atom_gmail_checker_token")
@@ -144,6 +144,7 @@ module.exports = AtomGmailChecker =
         atom.notifications.addError("Atom gmail checker error", {detail: message, dismissable: true})
         cb message, null
     req.on "error", (e) =>
+      console.log url
       console.error e
       atom.notifications.addError("Atom gmail checker error", {detail: JSON.stringify(e), dismissable: true})
       cb e, null
@@ -157,8 +158,8 @@ module.exports = AtomGmailChecker =
     @subscriptions?.dispose()
 
   dispose: ->
-    timer = @counter.getIntervalNumber("data-number")
-    clearInterval(timer) if timer
+    clearInterval(@unreadCheckTimer) if @unreadCheckTimer
+    clearInterval(@authTimer) if @authTimer
     @authPanel = null
     @statusBarTile?.destroy()
     @tatusBarTile = null
