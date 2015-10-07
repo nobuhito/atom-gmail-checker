@@ -38,18 +38,17 @@ module.exports = AtomGmailChecker =
     if @isLogin
       @subscriptions = new CompositeDisposable
       @subscriptions.add atom.commands.add 'atom-workspace',
-        'atom_gmail_checker:login': => @auth()
-      @isLogin = false
+        'atom_gmail_checker:logout': => @logout()
     else
       @subscriptions = new CompositeDisposable
       @subscriptions.add atom.commands.add 'atom-workspace',
-        'atom_gmail_checker:logout': => @logout()
-      @isLogin = true
+        'atom_gmail_checker:login': => @auth()
 
   activate: (state) ->
 
     @SCOPES = ["#{API}/auth/gmail.readonly"]
     @counter = new AtomGmailCheckerStatusView({userId: ""})
+    @toggleCommand()
 
   consumeStatusBar: (statusBar) ->
     @statusBarTile = statusBar.addRightTile
@@ -87,6 +86,7 @@ module.exports = AtomGmailChecker =
     url = "#{API}/gmail/v1/users/me/profile?access_token=#{@access_token}"
     @getJson url, (err, res) =>
       return null if err
+      @isLogin = true
       @toggleCommand()
       @counter.setHistoryId res.historyId
       @counter.setEmailAddress res.emailAddress
@@ -140,6 +140,7 @@ module.exports = AtomGmailChecker =
     }
     auth = new AtomGmailCheckerAuthView(params, this)
     @authPanel = atom.workspace.addRightPanel(item: atom.views.getView(auth))
+    @isLogin = false
     @toggleCommand()
 
   getJson: (url, cb) ->

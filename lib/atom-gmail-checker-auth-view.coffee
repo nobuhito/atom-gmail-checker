@@ -15,7 +15,6 @@ class AtomGmailCheckerAuthView extends View
       hashes = {}
 
       if url.hash?
-        console.log url
         for item in url.hash.replace(/^#/, "").split("&")
           hash = item.split("=")
           hashes[hash[0]] = hash[1]
