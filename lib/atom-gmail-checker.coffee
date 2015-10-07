@@ -17,6 +17,7 @@ module.exports = AtomGmailChecker =
   statusBarTile: null
   preview: null
   previewPanel: null
+  isLogin: false
 
   config:
     checkInterval:
@@ -31,6 +32,19 @@ module.exports = AtomGmailChecker =
       title: "Check query"
       type: "string"
       default: "is:unread is:inbox"
+
+  toggleCommand: ->
+    @subscriptions = null
+    if @isLogin
+      @subscriptions = new CompositeDisposable
+      @subscriptions.add atom.commands.add 'atom-workspace',
+        'atom_gmail_checker:login': => @auth()
+      @isLogin = false
+    else
+      @subscriptions = new CompositeDisposable
+      @subscriptions.add atom.commands.add 'atom-workspace',
+        'atom_gmail_checker:logout': => @logout()
+      @isLogin = true
 
   activate: (state) ->
 
@@ -73,9 +87,7 @@ module.exports = AtomGmailChecker =
     url = "#{API}/gmail/v1/users/me/profile?access_token=#{@access_token}"
     @getJson url, (err, res) =>
       return null if err
-      @subscriptions = new CompositeDisposable
-      @subscriptions.add atom.commands.add 'atom-workspace',
-        'atom_gmail_checker:logout': => @logout()
+      @toggleCommand()
       @counter.setHistoryId res.historyId
       @counter.setEmailAddress res.emailAddress
       @emailAddress = res.emailAddress
@@ -128,6 +140,7 @@ module.exports = AtomGmailChecker =
     }
     auth = new AtomGmailCheckerAuthView(params, this)
     @authPanel = atom.workspace.addRightPanel(item: atom.views.getView(auth))
+    @toggleCommand()
 
   getJson: (url, cb) ->
     req = http.get url, (res) =>
