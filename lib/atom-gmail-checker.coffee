@@ -45,6 +45,7 @@ module.exports = AtomGmailChecker =
         'atom_gmail_checker:login': => @auth()
 
   activate: (state) ->
+    @deleteOldFile()
 
     @SCOPES = ["#{API}/auth/gmail.readonly"]
     @counter = new AtomGmailCheckerStatusView({userId: ""})
@@ -174,3 +175,8 @@ module.exports = AtomGmailChecker =
     @authPanel = null
     @statusBarTile?.destroy()
     @tatusBarTile = null
+
+  deleteOldFile: ->
+    TOKEN_DIR = (process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE) + "/.atom/"
+    TOKEN_PATH = TOKEN_DIR + "atom-gmail-checker-token.json"
+    fs.unlink TOKEN_PATH, (err) -> console.log "remove atom-gmail-checker-token.json." unless err
