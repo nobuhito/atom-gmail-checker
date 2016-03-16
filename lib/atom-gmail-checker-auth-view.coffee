@@ -7,7 +7,7 @@ class AtomGmailCheckerAuthView extends View
     @div id:"atomGmailCheckerBrowser", class:"browser", style:"height:100%;width:0px", =>
       @div class:"buttonOuter inline-block", =>
         @button "Close to Authentication for AtomGmailChecker.", outlet:"close", class: "btn", style: "float:right"
-      @tag "webview", id:"auth", class:"auth native-key-bindings", outlet:"auth", src:"#{url}"
+      @tag "webview", id:"auth", class:"auth", outlet:"auth", src:"#{url}"
 
   attached: (onDom) ->
     @auth[0].addEventListener 'did-finish-load', (evt) =>
