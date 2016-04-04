@@ -4,10 +4,10 @@ module.exports =
 class AtomGmailCheckerAuthView extends View
   @content: (params, self)->
     url = "#{params.src.replace(/"/g, '&quot;')}"
-    @div id:"atomGmailCheckerBrowser", class:"browser", style:"height:100%;width:0px", =>
+    @div id:"atomGmailCheckerBrowser", class:"browser", style:"width:0px", =>
       @div class:"buttonOuter inline-block", =>
         @button "Close to Authentication for AtomGmailChecker.", outlet:"close", class: "btn", style: "float:right"
-      @tag "webview", id:"auth", class:"auth", outlet:"auth", src:"#{url}"
+      @tag "webview", id:"auth", class:"auth inline-block native-key-bindings", outlet:"auth", src:"#{url}", autosize:"on"
 
   attached: (onDom) ->
     @auth[0].addEventListener 'did-finish-load', (evt) =>
@@ -24,7 +24,10 @@ class AtomGmailCheckerAuthView extends View
           @self.postAuth hashes.access_token
           return null
 
-      $("#atomGmailCheckerBrowser").width("450px")
+      $("#atomGmailCheckerBrowser").width(450)
+      @auth
+        .height(($("#atomGmailCheckerBrowser").height() - @close.height()))
+        .width($("#atomGmailCheckerBrowser").width())
 
   initialize: (params, self)->
     @self = self
